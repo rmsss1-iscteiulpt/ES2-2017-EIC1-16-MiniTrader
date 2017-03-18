@@ -20,6 +20,8 @@ import org.mockito.runners.MockitoJUnitRunner;
  *
  */
 
+//classe Test
+
 @RunWith(MockitoJUnitRunner.class)
 public class MicroServerTest {
 	
