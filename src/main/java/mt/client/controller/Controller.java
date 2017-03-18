@@ -1,6 +1,8 @@
 package mt.client.controller;
 
 import mt.client.exception.AuthenticationException;
+
+
 import mt.client.exception.ConnectionClosedException;
 
 import java.io.IOException;
@@ -12,6 +14,8 @@ import mt.Order;
 import mt.client.Session;
 import mt.comm.ClientSideMessage;
 
+
+// Video de ES
 /**
  * Class responsible for keeping the business logic for the Micro Trader User
  * Interface.
