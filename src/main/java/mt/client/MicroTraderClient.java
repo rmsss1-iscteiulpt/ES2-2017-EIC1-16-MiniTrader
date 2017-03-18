@@ -2,6 +2,8 @@ package mt.client;
 
 import mt.comm.ClientComm;
 
+//Video ES2
+
 /**
  * 
  * The MicroTraderClient should use the {@link ClientComm} interface to
