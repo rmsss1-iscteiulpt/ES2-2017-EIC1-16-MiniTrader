@@ -239,21 +239,14 @@ public class MicroServer implements MicroTraderServer {
 	private void processNewOrder(ServerSideMessage msg) throws ServerException {
 		LOGGER.log(Level.INFO, "Processing new order...");
 
-		Order o = msg.getOrder();
+		
 		
 		// save the order on map
-		saveOrder(o);
+		if(saveOrder(msg.getOrder())){
+			createXML(msg.getOrder());
 
 		// if is buy order
-		if (o.isBuyOrder()) {
-			processBuy(msg.getOrder());
-		}
 		
-		// if is sell order
-		if (o.isSellOrder()) {
-			processSell(msg.getOrder());
-		}
-
 		// notify clients of changed order
 		notifyClientsOfChangedOrders();
 
@@ -262,6 +255,7 @@ public class MicroServer implements MicroTraderServer {
 
 		// reset the set of changed orders
 		updatedOrders = new HashSet<>();
+		}
 
 	}
 	
@@ -270,14 +264,44 @@ public class MicroServer implements MicroTraderServer {
 	 * 
 	 * @param o
 	 * 			the order to be stored on map
+	 * returns false if the Business rules and constraints are not met for the AS Region
+	 * returns true if the Business rules and constraints are met for the AS Region
 	 */
-	private void saveOrder(Order o) {
+	private boolean saveOrder(Order o) {
 		LOGGER.log(Level.INFO, "Storing the new order...");
 		
+			if (o.isBuyOrder()) {
+				if(o.getNumberOfUnits()<10){
+					System.out.println("NAO PODES MENOS QUE 10");
+					return false;
+				}
+				else{
+				Set<Order> orders = orderMap.get(o.getNickname());
+				orders.add(o);	
+				processBuy(o);
+				return true;
+				}
+			}
+			
+			// if is sell order
+			if (o.isSellOrder()) {
+				if(o.getNumberOfUnits()<10){
+					System.out.println("MENos que 10");
+					return false;
+				}
+				else{
+				Set<Order> orders = orderMap.get(o.getNickname());
+				orders.add(o);	
+				processSell(o);
+				return true;
+				}
+			}
+
+			
 		//save order on map
-		Set<Order> orders = orderMap.get(o.getNickname());
-		orders.add(o);	
-		createXML(o);
+		
+		return false;
+		
 	}
 
 	/**
@@ -360,11 +384,15 @@ public class MicroServer implements MicroTraderServer {
 	 * @param order refers to a client buy order or a sell order
 	 * @throws ServerException
 	 * 				exception thrown by the server indicating that there is no order
+	 * if any of the Business rules and constraints for the AS Region are not met it doesn't notify the clients
 	 */			
 	private void notifyAllClients(Order order) throws ServerException {
 		LOGGER.log(Level.INFO, "Notifying clients about the new order...");
 		if(order == null){
 			throw new ServerException("There was no order in the message");
+		}
+		if(!saveOrder(order)){
+			return;
 		}
 		for (Entry<String, Set<Order>> entry : orderMap.entrySet()) {
 			serverComm.sendOrder(entry.getKey(), order); 

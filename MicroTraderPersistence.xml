@@ -3,4 +3,10 @@
 <Order Id="5" Price="20" Stock="PT" Type="Buy" Units="15">
 	<Customer>Manuel</Customer>
 </Order>
+<Order Id="1" Price="12.0" Stock="1667321" Type="BuyOrder" Units="34">
+<Customer>12143</Customer>
+</Order>
+<Order Id="2" Price="3.0" Stock="7quu" Type="SellOrder" Units="11">
+<Customer>12143</Customer>
+</Order>
 </XML>
