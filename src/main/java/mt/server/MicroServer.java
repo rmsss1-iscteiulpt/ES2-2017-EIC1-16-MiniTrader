@@ -125,8 +125,10 @@ public class MicroServer implements MicroTraderServer {
 					if (msg.getOrder().getServerOrderID() == EMPTY) {
 						msg.getOrder().setServerOrderID(id++);
 					}
-					notifyAllClients(msg.getOrder());
-					processNewOrder(msg);
+					boolean send = processNewOrder(msg);
+					
+//					processNewOrder(msg);
+					notifyAllClients(msg.getOrder(), send);
 				} catch (ServerException e) {
 					serverComm.sendError(msg.getSenderNickname(), e.getMessage());
 				}
@@ -238,7 +240,7 @@ public class MicroServer implements MicroTraderServer {
 	 * @param msg
 	 *            the message sent by the client
 	 */
-	private void processNewOrder(ServerSideMessage msg) throws ServerException {
+	private boolean processNewOrder(ServerSideMessage msg) throws ServerException {
 		LOGGER.log(Level.INFO, "Processing new order...");
 
 		if (saveOrder(msg.getOrder())) {
@@ -251,8 +253,9 @@ public class MicroServer implements MicroTraderServer {
 
 			// reset the set of changed orders
 			updatedOrders = new HashSet<>();
+			return true;
 		}
-
+		return false;
 	}
 
 	/**
@@ -263,7 +266,7 @@ public class MicroServer implements MicroTraderServer {
 	 * 
 	 *            if the Business rules and constraints are met , it returns
 	 *            true if Business rules and constraints
-	 * @throws ServerException 
+	 * @throws ServerException
 	 */
 	private boolean saveOrder(Order o) throws ServerException {
 		LOGGER.log(Level.INFO, "Storing the new order...");
@@ -390,7 +393,7 @@ public class MicroServer implements MicroTraderServer {
 	private void notifyClientsOfChangedOrders() throws ServerException {
 		LOGGER.log(Level.INFO, "Notifying client about the changed order...");
 		for (Order order : updatedOrders) {
-			notifyAllClients(order);
+			notifyAllClients(order,true);
 		}
 	}
 
@@ -406,16 +409,16 @@ public class MicroServer implements MicroTraderServer {
 	 *             if Business rules and constraints for the US Region are not
 	 *             met it won't notify clients
 	 */
-	private void notifyAllClients(Order order) throws ServerException {
+	private void notifyAllClients(Order order, boolean send) throws ServerException {
 		LOGGER.log(Level.INFO, "Notifying clients about the new order...");
 		if (order == null) {
 			throw new ServerException("There was no order in the message");
 		}
-		if (!saveOrder(order)) {
-			return;
-		}
-		for (Entry<String, Set<Order>> entry : orderMap.entrySet()) {
-			serverComm.sendOrder(entry.getKey(), order);
+		if (!send) {
+		} else {
+			for (Entry<String, Set<Order>> entry : orderMap.entrySet()) {
+				serverComm.sendOrder(entry.getKey(), order);
+			}
 		}
 	}
 
@@ -446,28 +449,28 @@ public class MicroServer implements MicroTraderServer {
 	 */
 	private void createXML(Order order) {
 		try {
-//			String s = System.getProperty("user.dir");
+			// String s = System.getProperty("user.dir");
 			File inputFile = new File("MicroTraderPersistence.xml");
 			DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
 			DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
 			Document doc = null;
 			Element root = null;
 			boolean existe;
-			if(inputFile.exists()){
+			if (inputFile.exists()) {
 				doc = dBuilder.parse(inputFile);
 				root = doc.getDocumentElement();
-				existe=true;
-				
-			}else{
+				existe = true;
+
+			} else {
 				inputFile.createNewFile();
 				doc = dBuilder.newDocument();
 				root = doc.createElement("XML");
-				existe=false;
+				existe = false;
 			}
 			String type;
 			if (order.isBuyOrder() == true) {
 				type = "BuyOrder";
-			} else{
+			} else {
 				type = "SellOrder";
 			}
 			Element newElementOrder = doc.createElement("Order");
@@ -477,7 +480,7 @@ public class MicroServer implements MicroTraderServer {
 			newElementOrder.setAttribute("Units", "" + order.getNumberOfUnits());
 			newElementOrder.setAttribute("Price", "" + order.getPricePerUnit());
 			root.appendChild(newElementOrder);
-			if(existe==false){
+			if (existe == false) {
 				doc.appendChild(root);
 			}
 			Transformer transformer = TransformerFactory.newInstance().newTransformer();
@@ -489,6 +492,5 @@ public class MicroServer implements MicroTraderServer {
 			e.printStackTrace();
 		}
 	}
-	
 
 }

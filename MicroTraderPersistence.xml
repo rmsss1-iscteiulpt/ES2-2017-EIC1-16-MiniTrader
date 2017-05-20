@@ -1,4 +1,12 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <XML>	
 
+<Order Id="2" Price="1.0" Stock="aa" Type="SellOrder" Units="15"/>
+<Order Id="2" Price="1.0" Stock="aa" Type="SellOrder" Units="15"/>
+<Order Id="3" Price="1.0" Stock="aa" Type="BuyOrder" Units="0"/>
+<Order Id="4" Price="22.0" Stock="aa" Type="SellOrder" Units="22"/>
+<Order Id="4" Price="22.0" Stock="aa" Type="SellOrder" Units="22"/>
+<Order Id="5" Price="22.0" Stock="aa" Type="BuyOrder" Units="0"/>
+<Order Id="2" Price="1.0" Stock="aa" Type="SellOrder" Units="15"/>
+<Order Id="3" Price="1.0" Stock="aa" Type="BuyOrder" Units="0"/>
 </XML>
