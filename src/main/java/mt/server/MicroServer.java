@@ -105,8 +105,9 @@ public class MicroServer implements MicroTraderServer {
 						if(msg.getOrder().getServerOrderID() == EMPTY){
 							msg.getOrder().setServerOrderID(id++);
 						}
-						notifyAllClients(msg.getOrder());
-						processNewOrder(msg);
+						boolean send = processNewOrder(msg);
+						notifyAllClients(msg.getOrder(), send);
+//						processNewOrder(msg);
 					} catch (ServerException e) {
 						serverComm.sendError(msg.getSenderNickname(), e.getMessage());
 					}
@@ -220,7 +221,7 @@ public class MicroServer implements MicroTraderServer {
 	 *  notifies all clients of changed orders and remove Fulfilled orders 
 	 *            
 	 */
-	private void processNewOrder(ServerSideMessage msg) throws ServerException {
+	private boolean processNewOrder(ServerSideMessage msg) throws ServerException {
 		LOGGER.log(Level.INFO, "Processing new order...");
 
 		if (saveOrder(msg.getOrder())) {
@@ -231,8 +232,10 @@ public class MicroServer implements MicroTraderServer {
 			removeFulfilledOrders();
 			// reset the set of changed orders
 			updatedOrders = new HashSet<>();
+			return true;
 
 		}
+		return false;
 		
 
 	}
@@ -381,7 +384,7 @@ public class MicroServer implements MicroTraderServer {
 	private void notifyClientsOfChangedOrders() throws ServerException {
 		LOGGER.log(Level.INFO, "Notifying client about the changed order...");
 		for (Order order : updatedOrders){
-			notifyAllClients(order);
+			notifyAllClients(order,true);
 		}
 	}
 	
@@ -394,16 +397,18 @@ public class MicroServer implements MicroTraderServer {
 	 * 
 	 * if Business rules and constraints are not met for the European Region
 	 */			
-	private void notifyAllClients(Order order) throws ServerException {
+	private void notifyAllClients(Order order, boolean send) throws ServerException {
 		LOGGER.log(Level.INFO, "Notifying clients about the new order...");
 		if(order == null){
 			throw new ServerException("There was no order in the message");
 		}
-		if(!saveOrder(order)){
-			return;
+		if(!send){
+		
 		}
+		else{
 		for (Entry<String, Set<Order>> entry : orderMap.entrySet()) {
 			serverComm.sendOrder(entry.getKey(), order); 
+		}
 		}
 	}
 	
