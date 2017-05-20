@@ -260,9 +260,9 @@ public class MicroServer implements MicroTraderServer {
 	 * 
 	 * @param o
 	 *            the order to be stored on map
-	 *            
-	 * if the Business rules and constraints are met , it returns true
-	 * if Business rules and constraints are not met, it returns false         
+	 * 
+	 *            if the Business rules and constraints are met , it returns
+	 *            true if Business rules and constraints
 	 */
 	private boolean saveOrder(Order o) {
 		LOGGER.log(Level.INFO, "Storing the new order...");
@@ -281,8 +281,24 @@ public class MicroServer implements MicroTraderServer {
 
 		// if is sell order
 		if (o.isSellOrder()) {
+
+			int contador = 0;
 			if (o.getNumberOfUnits() < 10) {
 				serverComm.sendError(o.getNickname(), "Number of units must be 10 or higher");
+				return false;
+			}
+			Set s = orderMap.get(o.getNickname());
+			Iterator it = s.iterator();
+			while (it.hasNext()) {
+				Order order = (Order) it.next();
+				if (order.isSellOrder() == true) {
+
+					contador++;
+
+				}
+			}
+
+			if (contador == 5) {
 				return false;
 			} else {
 				Set<Order> orders = orderMap.get(o.getNickname());
@@ -290,6 +306,7 @@ public class MicroServer implements MicroTraderServer {
 				processSell(o);
 				return true;
 			}
+
 		}
 
 		return false;
@@ -384,15 +401,16 @@ public class MicroServer implements MicroTraderServer {
 	 * @throws ServerException
 	 *             exception thrown by the server indicating that there is no
 	 *             order
-	 *             
-	 * if Business rules and constraints for the US Region are not met it won't notify clients
+	 * 
+	 *             if Business rules and constraints for the US Region are not
+	 *             met it won't notify clients
 	 */
 	private void notifyAllClients(Order order) throws ServerException {
 		LOGGER.log(Level.INFO, "Notifying clients about the new order...");
 		if (order == null) {
 			throw new ServerException("There was no order in the message");
 		}
-		if(!saveOrder(order)){
+		if (!saveOrder(order)) {
 			return;
 		}
 		for (Entry<String, Set<Order>> entry : orderMap.entrySet()) {
