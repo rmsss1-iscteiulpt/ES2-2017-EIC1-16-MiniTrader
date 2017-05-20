@@ -215,33 +215,25 @@ public class MicroServer implements MicroTraderServer {
 	 * 
 	 * @param msg
 	 *            the message sent by the client
+	 *            
+	 *  if Business rules and constraints are met for the European Region and saveOrder Returns true,
+	 *  notifies all clients of changed orders and remove Fulfilled orders 
+	 *            
 	 */
 	private void processNewOrder(ServerSideMessage msg) throws ServerException {
 		LOGGER.log(Level.INFO, "Processing new order...");
 
-		Order o = msg.getOrder();
-		
-		// save the order on map
-		saveOrder(o);
+		if (saveOrder(msg.getOrder())) {
+			// notify clients of changed order
+			notifyClientsOfChangedOrders();
 
-		// if is buy order
-		if (o.isBuyOrder()) {
-			processBuy(msg.getOrder());
+			// remove all fulfilled orders
+			removeFulfilledOrders();
+			// reset the set of changed orders
+			updatedOrders = new HashSet<>();
+
 		}
 		
-		// if is sell order
-		if (o.isSellOrder()) {
-			processSell(msg.getOrder());
-		}
-
-		// notify clients of changed order
-		notifyClientsOfChangedOrders();
-
-		// remove all fulfilled orders
-		removeFulfilledOrders();
-
-		// reset the set of changed orders
-		updatedOrders = new HashSet<>();
 
 	}
 	
@@ -250,13 +242,43 @@ public class MicroServer implements MicroTraderServer {
 	 * 
 	 * @param o
 	 * 			the order to be stored on map
+	 * 
+	 * if Business rules and constraints are not met for the European Region returns false
 	 */
-	private void saveOrder(Order o) {
+	private boolean saveOrder(Order o) {
 		LOGGER.log(Level.INFO, "Storing the new order...");
 		
-		//save order on map
-		Set<Order> orders = orderMap.get(o.getNickname());
-		orders.add(o);		
+		if (o.isBuyOrder()) {
+			if(o.getNumberOfUnits()<10){
+			serverComm.sendError(o.getNickname(), "Number of units must be 10 or higher");
+				return false;
+			}
+			else{
+			Set<Order> orders = orderMap.get(o.getNickname());
+			orders.add(o);	
+			processBuy(o);
+			return true;
+			}
+		}
+		
+		// if is sell order
+		if (o.isSellOrder()) {
+			if(o.getNumberOfUnits()<10){
+				serverComm.sendError(o.getNickname(), "Number of units must be 10 or higher");
+				return false;
+			}
+			else{
+			Set<Order> orders = orderMap.get(o.getNickname());
+			orders.add(o);	
+			processSell(o);
+			return true;
+			}
+		}
+
+		
+	//save order on map
+	
+	return false;		
 	}
 
 	/**
@@ -339,11 +361,16 @@ public class MicroServer implements MicroTraderServer {
 	 * @param order refers to a client buy order or a sell order
 	 * @throws ServerException
 	 * 				exception thrown by the server indicating that there is no order
+	 * 
+	 * if Business rules and constraints are not met for the European Region
 	 */			
 	private void notifyAllClients(Order order) throws ServerException {
 		LOGGER.log(Level.INFO, "Notifying clients about the new order...");
 		if(order == null){
 			throw new ServerException("There was no order in the message");
+		}
+		if(!saveOrder(order)){
+			return;
 		}
 		for (Entry<String, Set<Order>> entry : orderMap.entrySet()) {
 			serverComm.sendOrder(entry.getKey(), order); 
