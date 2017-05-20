@@ -303,6 +303,8 @@ public class MicroServer implements MicroTraderServer {
 			}
 
 			if (contador == 5) {
+				serverComm.sendError(o.getNickname(), "Cannot have more than 5 Unfulfilled sell orders");
+
 				return false;
 			} else {
 				Set<Order> orders = orderMap.get(o.getNickname());
