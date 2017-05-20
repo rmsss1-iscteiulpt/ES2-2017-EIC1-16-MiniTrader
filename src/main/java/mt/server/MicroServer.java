@@ -1,6 +1,6 @@
 package mt.server;
 
-
+//Alterações feitas
 import java.io.File;
 import java.io.FileOutputStream;
 import java.util.ArrayList;
