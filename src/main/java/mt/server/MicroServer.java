@@ -247,27 +247,30 @@ public class MicroServer implements MicroTraderServer {
 	 */
 	private boolean saveOrder(Order o) {
 		LOGGER.log(Level.INFO, "Storing the new order...");
-		
-		if (o.isBuyOrder()) {
-			if (o.getNumberOfUnits() < 10) {
-				serverComm.sendError(o.getNickname(), "Number of units must be 10 or higher");
-				return false;
-			} else {
-				Set<Order> orders = orderMap.get(o.getNickname());
-				orders.add(o);
-				processBuy(o);
-				return true;
-			}
+
+
+		if (o.getNumberOfUnits() < 10) {
+			serverComm.sendError(o.getNickname(), "Number of units must be 10 or higher");			
+			return false;
 		}
-
-		// if is sell order
-		if (o.isSellOrder()) {
-
-			int contador = 0;
-			if (o.getNumberOfUnits() < 10) {
-				serverComm.sendError(o.getNickname(), "Number of units must be 10 or higher");
-				return false;
+		if (o.isBuyOrder()) {
+			Set s = orderMap.get(o.getNickname());
+			Iterator it = s.iterator();
+			while (it.hasNext()) {
+				Order order = (Order) it.next();
+				if (order.isSellOrder() && (order.getStock().equals(o.getStock()))) {
+					serverComm.sendError(o.getNickname(), "Clients are not allowed to issue sell orders for their own buy orders and vice versa");			
+					return false;
+				}
 			}
+			Set<Order> orders = orderMap.get(o.getNickname());
+			orders.add(o);
+			processBuy(o);
+			return true;
+
+		}
+		if (o.isSellOrder()) {
+			int contador = 0;
 			Set s = orderMap.get(o.getNickname());
 			Iterator it = s.iterator();
 			while (it.hasNext()) {
@@ -275,22 +278,37 @@ public class MicroServer implements MicroTraderServer {
 				if (order.isSellOrder() == true) {
 
 					contador++;
+					System.out.println("CONTADOR " + contador);
+
+				}
+				// Business constraint nº 1 for EU region
+				if (order.isBuyOrder() == true && order.getStock().equals(o.getStock())) {
+					
+					serverComm.sendError(o.getNickname(), "Clients are not allowed to issue sell orders for their own buy orders and vice versa");			
+					return false;
 
 				}
 			}
 
 			if (contador == 5) {
+				serverComm.sendError(o.getNickname(), "Sellers cannot have more than five sell orders unfulfilled at any time");			
 				return false;
 			} else {
 				Set<Order> orders = orderMap.get(o.getNickname());
 				orders.add(o);
 				processSell(o);
 				return true;
-			}
 
+			}
 		}
 
-		return false;		
+		else {
+			// save order on map
+			Set<Order> orders = orderMap.get(o.getNickname());
+			orders.add(o);
+			return true;
+
+		}		
 	}
 
 	/**
