@@ -107,7 +107,7 @@ public class MicroServer implements MicroTraderServer {
 						}
 						boolean send = processNewOrder(msg);
 						notifyAllClients(msg.getOrder(), send);
-//						processNewOrder(msg);
+					
 					} catch (ServerException e) {
 						serverComm.sendError(msg.getSenderNickname(), e.getMessage());
 					}
