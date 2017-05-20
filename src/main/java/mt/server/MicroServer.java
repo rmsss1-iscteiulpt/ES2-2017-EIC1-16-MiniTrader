@@ -249,36 +249,48 @@ public class MicroServer implements MicroTraderServer {
 		LOGGER.log(Level.INFO, "Storing the new order...");
 		
 		if (o.isBuyOrder()) {
-			if(o.getNumberOfUnits()<10){
-			serverComm.sendError(o.getNickname(), "Number of units must be 10 or higher");
-				return false;
-			}
-			else{
-			Set<Order> orders = orderMap.get(o.getNickname());
-			orders.add(o);	
-			processBuy(o);
-			return true;
-			}
-		}
-		
-		// if is sell order
-		if (o.isSellOrder()) {
-			if(o.getNumberOfUnits()<10){
+			if (o.getNumberOfUnits() < 10) {
 				serverComm.sendError(o.getNickname(), "Number of units must be 10 or higher");
 				return false;
-			}
-			else{
-			Set<Order> orders = orderMap.get(o.getNickname());
-			orders.add(o);	
-			processSell(o);
-			return true;
+			} else {
+				Set<Order> orders = orderMap.get(o.getNickname());
+				orders.add(o);
+				processBuy(o);
+				return true;
 			}
 		}
 
-		
-	//save order on map
-	
-	return false;		
+		// if is sell order
+		if (o.isSellOrder()) {
+
+			int contador = 0;
+			if (o.getNumberOfUnits() < 10) {
+				serverComm.sendError(o.getNickname(), "Number of units must be 10 or higher");
+				return false;
+			}
+			Set s = orderMap.get(o.getNickname());
+			Iterator it = s.iterator();
+			while (it.hasNext()) {
+				Order order = (Order) it.next();
+				if (order.isSellOrder() == true) {
+
+					contador++;
+
+				}
+			}
+
+			if (contador == 5) {
+				return false;
+			} else {
+				Set<Order> orders = orderMap.get(o.getNickname());
+				orders.add(o);
+				processSell(o);
+				return true;
+			}
+
+		}
+
+		return false;		
 	}
 
 	/**
