@@ -286,7 +286,7 @@ public class MicroServer implements MicroTraderServer {
 			// if is sell order
 			if (o.isSellOrder()) {
 				if(o.getNumberOfUnits()<10){
-					System.out.println("MENos que 10");
+					serverComm.sendError(o.getNickname(), "Number of units must be 10 or higher");
 					return false;
 				}
 				else{
