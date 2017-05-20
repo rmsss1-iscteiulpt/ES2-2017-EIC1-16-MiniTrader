@@ -263,8 +263,9 @@ public class MicroServer implements MicroTraderServer {
 	 * 
 	 *            if the Business rules and constraints are met , it returns
 	 *            true if Business rules and constraints
+	 * @throws ServerException 
 	 */
-	private boolean saveOrder(Order o) {
+	private boolean saveOrder(Order o) throws ServerException {
 		LOGGER.log(Level.INFO, "Storing the new order...");
 
 		if (o.isBuyOrder()) {
@@ -445,66 +446,40 @@ public class MicroServer implements MicroTraderServer {
 	 */
 	private void createXML(Order order) {
 		try {
+//			String s = System.getProperty("user.dir");
 			File inputFile = new File("MicroTraderPersistence.xml");
 			DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
 			DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
-			Document doc = dBuilder.parse(inputFile);
-			doc.getDocumentElement().normalize();
-			NodeList nList = doc.getElementsByTagName("Order");
-			System.out.println("----- Navigate the tree nodes -----");
-			int id = nList.getLength();
-			for (int temp = 0; temp < nList.getLength(); temp++) {
-				Node nNode = nList.item(temp);
-				System.out.print(nNode.getNodeName() + " ");
-				if (nNode.getNodeType() == Node.ELEMENT_NODE) {
-					Element eElement = (Element) nNode;
-					System.out.print("Id:" + eElement.getAttribute("Id"));
-					System.out.print(" Type:" + eElement.getAttribute("Type"));
-					System.out.print(" Stock:" + eElement.getAttribute("Stock"));
-					System.out.print(" Units:" + eElement.getAttribute("Units"));
-					System.out.print(" Price:" + eElement.getAttribute("Price"));
-					System.out.println();
-				}
+			Document doc = null;
+			Element root = null;
+			boolean existe;
+			if(inputFile.exists()){
+				doc = dBuilder.parse(inputFile);
+				root = doc.getDocumentElement();
+				existe=true;
+				
+			}else{
+				inputFile.createNewFile();
+				doc = dBuilder.newDocument();
+				root = doc.createElement("XML");
+				existe=false;
 			}
-			System.out.println("----- Search the tree with xpath queries -----");
-			// Query 1
-			XPathFactory xpathFactory = XPathFactory.newInstance();
-			XPath xpath = xpathFactory.newXPath();
-			XPathExpression expr = xpath.compile("/XML/Order[@Id='2']/@*");
-			NodeList nl = (NodeList) expr.evaluate(doc, XPathConstants.NODESET);
-			System.out.print("Order ");
-			for (int i = 0; i < nl.getLength(); i++) {
-				System.out.print(nl.item(i).getNodeName() + ":");
-				System.out.print(nl.item(i).getFirstChild().getNodeValue() + " ");
-			}
-			// Query 2
-			expr = xpath.compile("/XML/Order[@Id='2']/Customer");
-			String str = (String) expr.evaluate(doc, XPathConstants.STRING);
-			System.out.println();
-			System.out.println("Customer of Order Id=5: " + str);
-
-			// Create new element Order with attributes
-			Element newElementOrder = doc.createElement("Order");
 			String type;
 			if (order.isBuyOrder() == true) {
 				type = "BuyOrder";
-			} else
+			} else{
 				type = "SellOrder";
+			}
+			Element newElementOrder = doc.createElement("Order");
 			newElementOrder.setAttribute("Id", "" + id);
 			newElementOrder.setAttribute("Type", type);
 			newElementOrder.setAttribute("Stock", order.getStock());
 			newElementOrder.setAttribute("Units", "" + order.getNumberOfUnits());
 			newElementOrder.setAttribute("Price", "" + order.getPricePerUnit());
-
-			// Add new node to XML document root element
-			System.out.println("----- Adding new element to root element -----");
-			System.out.println("Root element :" + doc.getDocumentElement().getNodeName());
-			System.out.println("Add Order Id=" + id + " Type=" + type + " Stock=" + order.getStock() + " Units="
-					+ order.getNumberOfUnits() + " Price=" + order.getPricePerUnit());
-			Node n = doc.getDocumentElement();
-			n.appendChild(newElementOrder);
-			// Save XML document
-			System.out.println("Save XML document.");
+			root.appendChild(newElementOrder);
+			if(existe==false){
+				doc.appendChild(root);
+			}
 			Transformer transformer = TransformerFactory.newInstance().newTransformer();
 			transformer.setOutputProperty(OutputKeys.INDENT, "yes");
 			StreamResult result = new StreamResult(new FileOutputStream("MicroTraderPersistence.xml"));
@@ -514,5 +489,6 @@ public class MicroServer implements MicroTraderServer {
 			e.printStackTrace();
 		}
 	}
+	
 
 }
