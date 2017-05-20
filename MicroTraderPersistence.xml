@@ -18,4 +18,16 @@
 <Order Id="5" Price="20.0" Stock="MSFT" Type="SellOrder" Units="10">
 <Customer>userA</Customer>
 </Order>
+<Order Id="6" Price="123.0" Stock="aa" Type="BuyOrder" Units="123">
+<Customer>aa</Customer>
+</Order>
+<Order Id="7" Price="1.0" Stock="DE" Type="BuyOrder" Units="11">
+<Customer>test</Customer>
+</Order>
+<Order Id="8" Price="1.0" Stock="de" Type="BuyOrder" Units="11">
+<Customer>test</Customer>
+</Order>
+<Order Id="9" Price="1.0" Stock="de" Type="SellOrder" Units="0">
+<Customer>test</Customer>
+</Order>
 </XML>
